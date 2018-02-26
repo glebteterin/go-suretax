@@ -334,28 +334,70 @@ type RequestItem struct {
 }
 
 type Address struct {
+	// Address Line 1
 	PrimaryAddressLine   string
+
+	// Address Line 2
 	SecondaryAddressLine string
+
+	// County
 	County               string
+
+	// City
 	City                 string
+
+	// State – full state name or two-character abbreviation accepted
 	State                string
+
+	// Zip code or Canadian postal code
 	PostalCode           string
+
+	// Zip+4
 	Plus4                string
+
+	// International country ISO code value in format: XX
 	Country              string
+
+	// Optional value. If provided, the CCH Geocode will take precedence and will be used instead of the address / zip+4 information.
 	Geocode              string
+
+	// Required. If selected, SureAddress will validate address and update the zip+4.
+	// 0 – No (default)
+	// 1 – Yes
 	VerifyAddress        string
 }
 
 type P2PAddress struct {
+	// Address Line 1
 	PrimaryAddressLine   string
+
+	// Address Line 2
 	SecondaryAddressLine string
+
+	// County
 	County               string
+
+	// City
 	City                 string
+
+	// State – full state name or two-character abbreviation accepted
 	State                string
+
+	// Zip code or Canadian postal code
 	PostalCode           string
+
+	// Zip+4
 	Plus4                string
+
+	// International country ISO code value in format: XX
 	Country              string
+
+	// Optional value. If provided, the CCH Geocode will take precedence and will be used instead of the address / zip+4 information.
 	Geocode              string
+
+	// Required. If selected, SureAddress will validate address and update the zip+4.
+	// 0 – No (default)
+	// 1 – Yes
 	VerifyAddress        string
 }
 
@@ -364,47 +406,110 @@ type ResponseWrapper struct {
 }
 
 type Response struct {
+	// Client transaction tracking provided in web request.
 	ClientTracking string
+
+	// Response message:
+	// For ResponseCode 9999 – “Success”
+	// For ResponseCode 9001 – “Success with Item errors”. See the ItemMessages field for a list of items / errors.
+	// For ResponseCode 1100-1400 – Unsuccessful / declined web request. See Appendix I for a list of the response code and messages.
 	HeaderMessage  string
+
+	// This field contains a list of items that were not able to be processed due to bad or invalid data (see Response Code of “9001”).
+	// These invalid items will be listed by line number with the corresponding response code and message.
+	// When an item error occurs, no tax processing will occur for that item record.
 	ItemMessages   []ItemMessage
-	MasterTransId  int
+
+	// ResponseCode:
+	// 9999 – Request was successful.
+	// 1101-1400 – Range of values for a failed request (no processing occurred)
+	// 9001 – Request was successful, but items within the request have errors.
+	// The specific items with errors are provided in the ItemMessages field.
 	ResponseCode   string
+
 	STAN           string
+
+	// Response will be either ‘Y' or ‘N' :
+	// Y = Success / Success with Item error N = Failure
 	Successful     string
+
+	// Transaction ID (integer) – provided by CCH SureTax
 	TransId        int
+
+	// Total Tax – a total of all taxes included in the TaxList
+	TotalTax string
 
 	GroupList []Group
 }
 
 type ItemMessage struct {
+	// Value corresponding to the line number in the web request
 	LineNumber   string
+
+	// The error message corresponding to the ResponseCode.
 	Message      string
+
+	// Value in the range 9100-9400.
 	ResponseCode string
 }
 
 type Group struct {
+	// Customer number
 	CustomerNumber string
+
+	// Invoice Number
 	InvoiceNumber  string
+
+	// Line Number from Request
 	LineNumber     string
+
 	LocationCode   string
+
+	// Tax State
 	StateCode      string
 
+	// See Tax Item(s) – contains one-to-many Tax Items
 	TaxList []Tax
 }
 
 type Tax struct {
+
+	// City Name of taxing jurisdiction
 	CityName         string
+
+	// County Name of taxing jurisdiction
 	CountyName       string
+
+	// The unit based fee for the tax type in format $.CCCC
 	FeeRate          float64
 	Juriscode        string
+
+	// Percentage of the tax that is taxable for the tax type in decimal format.
+	// This can be less than 100% in certain circumstances such as application of a Safe Harbor rate or a Private Line that is allocated to two or more points.
 	PercentTaxable   float64
+
+	// Source Revenue for Line Item
 	Revenue          string
+
+	// The effective revenue for the tax provided in the TaxAmount field.
+	// This amount can be different than the amount in the Revenue field when taxes are impacted by specific exemptions and/or tax on tax.
 	RevenueBase      string
+
+	// Tax Amount (taxes returned with five decimal places)
 	TaxAmount        string
 	TaxAuthorityID   string
 	TaxAuthorityName string
+
+	// The amount of tax on tax attributed to the final amount of tax.
+	// Please note this amount is included in the TaxAmount field total and is provided here separately only for reference purposes.
 	TaxOnTax         string
+
+	// Tax rate for tax type applied in decimal format
 	TaxRate          float64
+
+	// Tax Type Code
 	TaxTypeCode      string
+
+	// Jurisdiction-specific Tax Type Description
 	TaxTypeDesc      string
 }
