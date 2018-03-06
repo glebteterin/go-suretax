@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-var testCli = SuretaxClient{"", sync.Mutex{}, nil}
+var testCli = SuretaxClient{"", "", sync.Mutex{}, nil}
 
 func TestMain(m *testing.M) {
 	SetDebugLogger(nil)
@@ -91,7 +91,7 @@ func Test_getClient_default(t *testing.T) {
 
 	SetHttpClient(nil)
 
-	cli := SuretaxClient{"", sync.Mutex{}, nil}
+	cli := SuretaxClient{"", "", sync.Mutex{}, nil}
 
 	c := cli.getClient()
 

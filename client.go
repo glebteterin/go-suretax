@@ -24,6 +24,9 @@ type SuretaxClient struct {
 	// SureTax post request url.
 	Url string
 
+	// SureTax cancel post request url.
+	CancelUrl string
+
 	mu         sync.Mutex
 	httpClient HttpClient
 }
@@ -51,6 +54,36 @@ func (c *SuretaxClient) Send(req *Request) (*Response, error) {
 	}
 
 	res, err := c.parseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (c *SuretaxClient) Cancel(req *CancelRequest) (*CancelResponse, error) {
+
+	cli := http.Client{}
+
+	r, err := c.buildCancelRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := cli.Do(r)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debug("Response Code:", resp.StatusCode, "Status:", resp.Status)
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("SureTax returned " + resp.Status)
+	}
+
+	res, err := c.parseCancelResponse(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +137,26 @@ func (c *SuretaxClient) buildRequest(req *Request) (*http.Request, error) {
 	return r, nil
 }
 
+func (c *SuretaxClient) buildCancelRequest(req *CancelRequest) (*http.Request, error) {
+	reqBytes, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debug("Request Data: ", string(reqBytes))
+
+	reader := bytes.NewReader(reqBytes)
+
+	r, err := http.NewRequest("POST", c.Url, reader)
+	if err != nil {
+		return nil, err
+	}
+
+	r.Header.Add("Content-Type", "application/json")
+
+	return r, nil
+}
+
 func (c *SuretaxClient) parseResponse(resp *http.Response) (*Response, error) {
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
@@ -120,6 +173,23 @@ func (c *SuretaxClient) parseResponse(resp *http.Response) (*Response, error) {
 
 	res := &Response{}
 	if err := json.Unmarshal([]byte(respw.D), res); err != nil {
+		return nil, fmt.Errorf("Response Unmarshal Failed. Error: %v", err)
+	}
+
+	return res, nil
+}
+
+func (c *SuretaxClient) parseCancelResponse(resp *http.Response) (*CancelResponse, error) {
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debug("Response Data: ", string(bodyBytes))
+
+	res := &CancelResponse{}
+	if err := json.Unmarshal(bodyBytes, res); err != nil {
 		return nil, fmt.Errorf("Response Unmarshal Failed. Error: %v", err)
 	}
 
@@ -335,70 +405,70 @@ type RequestItem struct {
 
 type Address struct {
 	// Address Line 1
-	PrimaryAddressLine   string
+	PrimaryAddressLine string
 
 	// Address Line 2
 	SecondaryAddressLine string
 
 	// County
-	County               string
+	County string
 
 	// City
-	City                 string
+	City string
 
 	// State – full state name or two-character abbreviation accepted
-	State                string
+	State string
 
 	// Zip code or Canadian postal code
-	PostalCode           string
+	PostalCode string
 
 	// Zip+4
-	Plus4                string
+	Plus4 string
 
 	// International country ISO code value in format: XX
-	Country              string
+	Country string
 
 	// Optional value. If provided, the CCH Geocode will take precedence and will be used instead of the address / zip+4 information.
-	Geocode              string
+	Geocode string
 
 	// Required. If selected, SureAddress will validate address and update the zip+4.
 	// 0 – No (default)
 	// 1 – Yes
-	VerifyAddress        string
+	VerifyAddress string
 }
 
 type P2PAddress struct {
 	// Address Line 1
-	PrimaryAddressLine   string
+	PrimaryAddressLine string
 
 	// Address Line 2
 	SecondaryAddressLine string
 
 	// County
-	County               string
+	County string
 
 	// City
-	City                 string
+	City string
 
 	// State – full state name or two-character abbreviation accepted
-	State                string
+	State string
 
 	// Zip code or Canadian postal code
-	PostalCode           string
+	PostalCode string
 
 	// Zip+4
-	Plus4                string
+	Plus4 string
 
 	// International country ISO code value in format: XX
-	Country              string
+	Country string
 
 	// Optional value. If provided, the CCH Geocode will take precedence and will be used instead of the address / zip+4 information.
-	Geocode              string
+	Geocode string
 
 	// Required. If selected, SureAddress will validate address and update the zip+4.
 	// 0 – No (default)
 	// 1 – Yes
-	VerifyAddress        string
+	VerifyAddress string
 }
 
 type ResponseWrapper struct {
@@ -413,28 +483,28 @@ type Response struct {
 	// For ResponseCode 9999 – “Success”
 	// For ResponseCode 9001 – “Success with Item errors”. See the ItemMessages field for a list of items / errors.
 	// For ResponseCode 1100-1400 – Unsuccessful / declined web request. See Appendix I for a list of the response code and messages.
-	HeaderMessage  string
+	HeaderMessage string
 
 	// This field contains a list of items that were not able to be processed due to bad or invalid data (see Response Code of “9001”).
 	// These invalid items will be listed by line number with the corresponding response code and message.
 	// When an item error occurs, no tax processing will occur for that item record.
-	ItemMessages   []ItemMessage
+	ItemMessages []ItemMessage
 
 	// ResponseCode:
 	// 9999 – Request was successful.
 	// 1101-1400 – Range of values for a failed request (no processing occurred)
 	// 9001 – Request was successful, but items within the request have errors.
 	// The specific items with errors are provided in the ItemMessages field.
-	ResponseCode   string
+	ResponseCode string
 
-	STAN           string
+	STAN string
 
 	// Response will be either ‘Y' or ‘N' :
 	// Y = Success / Success with Item error N = Failure
-	Successful     string
+	Successful string
 
 	// Transaction ID (integer) – provided by CCH SureTax
-	TransId        int
+	TransId int
 
 	// Total Tax – a total of all taxes included in the TaxList
 	TotalTax string
@@ -444,10 +514,10 @@ type Response struct {
 
 type ItemMessage struct {
 	// Value corresponding to the line number in the web request
-	LineNumber   string
+	LineNumber string
 
 	// The error message corresponding to the ResponseCode.
-	Message      string
+	Message string
 
 	// Value in the range 9100-9400.
 	ResponseCode string
@@ -458,42 +528,41 @@ type Group struct {
 	CustomerNumber string
 
 	// Invoice Number
-	InvoiceNumber  string
+	InvoiceNumber string
 
 	// Line Number from Request
-	LineNumber     string
+	LineNumber string
 
-	LocationCode   string
+	LocationCode string
 
 	// Tax State
-	StateCode      string
+	StateCode string
 
 	// See Tax Item(s) – contains one-to-many Tax Items
 	TaxList []Tax
 }
 
 type Tax struct {
-
 	// City Name of taxing jurisdiction
-	CityName         string
+	CityName string
 
 	// County Name of taxing jurisdiction
-	CountyName       string
+	CountyName string
 
 	// The unit based fee for the tax type in format $.CCCC
-	FeeRate          float64
-	Juriscode        string
+	FeeRate   float64
+	Juriscode string
 
 	// Percentage of the tax that is taxable for the tax type in decimal format.
 	// This can be less than 100% in certain circumstances such as application of a Safe Harbor rate or a Private Line that is allocated to two or more points.
-	PercentTaxable   float64
+	PercentTaxable float64
 
 	// Source Revenue for Line Item
-	Revenue          string
+	Revenue string
 
 	// The effective revenue for the tax provided in the TaxAmount field.
 	// This amount can be different than the amount in the Revenue field when taxes are impacted by specific exemptions and/or tax on tax.
-	RevenueBase      string
+	RevenueBase string
 
 	// Tax Amount (taxes returned with five decimal places)
 	TaxAmount        string
@@ -502,14 +571,53 @@ type Tax struct {
 
 	// The amount of tax on tax attributed to the final amount of tax.
 	// Please note this amount is included in the TaxAmount field total and is provided here separately only for reference purposes.
-	TaxOnTax         string
+	TaxOnTax string
 
 	// Tax rate for tax type applied in decimal format
-	TaxRate          float64
+	TaxRate float64
 
 	// Tax Type Code
-	TaxTypeCode      string
+	TaxTypeCode string
 
 	// Jurisdiction-specific Tax Type Description
-	TaxTypeDesc      string
+	TaxTypeDesc string
+}
+
+type CancelRequest struct {
+	// Client ID Number – provided by CCH SureTax.
+	ClientNumber string
+
+	// Optional. Field for client transaction tracking.
+	ClientTracking string
+
+	// Transaction ID of web request to be cancelled.
+	TransId string
+
+	// Validation Key provided by CCH SureTax. Required for client access to API function.
+	ValidationKey string
+}
+
+type CancelResponse struct {
+	// Response will be either ‘Y' or ‘N' : Y = Success / Success with errors N = Failure
+	Successful string
+
+	// ResponseCode:
+	// 9999 – Cancel Request was successful.
+	// 1101-1600 – Range of values for a failed request (no processing occurred). Values include: 1150 - Failure - Validation Key Required.
+	// 1151 - Failure - Invalid Validation Key.
+	// 1510 - Failure - Transaction is more than 60 days old.
+	// 9410 - Failure - Transaction is already cancelled.
+	ResponseCode string
+
+	// Response message:
+	// For ResponseCode 9999 – “Success”
+	// For ResponseCode 9001 – “Success with Item errors”. See the ItemMessages field above for a list of items / errors.
+	// For ResponseCode 1100-1600 – Unsuccessful / declined web request. See above or (Appendix I) for a list.
+	HeaderMessage string
+
+	// Field for client transaction tracking.
+	ClientTracking string
+
+	// Transaction ID (integer) – provided by CCH SureTax
+	TransId int
 }
