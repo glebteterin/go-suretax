@@ -7,7 +7,8 @@ import (
 	"io/ioutil"
 	"fmt"
 	"sync"
-)
+	"time"
+	)
 
 type HttpClient interface {
 	Do(req *http.Request) (*http.Response, error)
@@ -33,7 +34,7 @@ type SuretaxClient struct {
 
 func (c *SuretaxClient) Send(req *Request) (*Response, error) {
 
-	cli := http.Client{}
+	cli := c.getClient()
 
 	r, err := c.buildRequest(req)
 	if err != nil {
@@ -63,7 +64,7 @@ func (c *SuretaxClient) Send(req *Request) (*Response, error) {
 
 func (c *SuretaxClient) Cancel(req *CancelRequest) (*CancelResponse, error) {
 
-	cli := http.Client{}
+	cli := c.getClient()
 
 	r, err := c.buildCancelRequest(req)
 	if err != nil {
@@ -105,7 +106,10 @@ func (c *SuretaxClient) getClient() HttpClient {
 	defer c.mu.Unlock()
 
 	if c.httpClient == nil {
-		c.httpClient = &http.Client{}
+		tr := &http.Transport{
+			IdleConnTimeout: time.Second * 10,
+		}
+		c.httpClient = &http.Client{Transport: tr, Timeout: time.Minute * 5}
 	}
 
 	return c.httpClient
@@ -143,11 +147,17 @@ func (c *SuretaxClient) buildCancelRequest(req *CancelRequest) (*http.Request, e
 		return nil, err
 	}
 
-	logger.Debug("Request Data: ", string(reqBytes))
+	rw := cancelRequestWrapper{string(reqBytes)}
+	reqWrapperBytes, err := json.Marshal(rw)
+	if err != nil {
+		return nil, err
+	}
 
-	reader := bytes.NewReader(reqBytes)
+	logger.Debug("Request Data: ", string(reqWrapperBytes))
 
-	r, err := http.NewRequest("POST", c.Url, reader)
+	reader := bytes.NewReader(reqWrapperBytes)
+
+	r, err := http.NewRequest("POST", c.CancelUrl, reader)
 	if err != nil {
 		return nil, err
 	}
@@ -198,6 +208,10 @@ func (c *SuretaxClient) parseCancelResponse(resp *http.Response) (*CancelRespons
 
 type requestWrapper struct {
 	Request string `json:"request"`
+}
+
+type cancelRequestWrapper struct {
+	Request string `json:"requestCancel"`
 }
 
 type Request struct {

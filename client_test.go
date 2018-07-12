@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"sync"
-)
+	)
 
 var testCli = SuretaxClient{"", "", sync.Mutex{}, nil}
 
@@ -144,7 +144,6 @@ func getTestRequest() *Request {
 
 	p2pAddress := P2PAddress{}
 	p2pAddress.VerifyAddress = "false"
-
 
 	item.Address = addr
 	item.P2PAddress = p2pAddress
