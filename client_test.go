@@ -87,6 +87,40 @@ func Test_parseResponse(t *testing.T) {
 	}
 }
 
+func Test_parseCancelResponse(t *testing.T) {
+
+	const transId = 616039832
+	const successful = "Y"
+	const responseCode = "9999"
+	const headerMessage = "Success"
+	const clientTracking = "Certi"
+
+	resp, err := testCli.parseCancelResponse(getTestCancelResponse())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.TransId != transId {
+		t.Fatalf("Expected TransId %v but got %v", transId, resp.TransId)
+	}
+
+	if resp.Successful != successful {
+		t.Fatalf("Expected Successful %v but got %v", successful, resp.Successful)
+	}
+
+	if resp.ResponseCode != responseCode {
+		t.Fatalf("Expected ResponseCode %v but got %v", responseCode, resp.ResponseCode)
+	}
+
+	if resp.HeaderMessage != headerMessage {
+		t.Fatalf("Expected HeaderMessage %v but got %v", headerMessage, resp.HeaderMessage)
+	}
+
+	if resp.ClientTracking != clientTracking {
+		t.Fatalf("Expected ClientTracking %v but got %v", clientTracking, resp.ClientTracking)
+	}
+}
+
 func Test_getClient_default(t *testing.T) {
 
 	SetHttpClient(nil)
@@ -158,6 +192,16 @@ func getTestRequest() *Request {
 func getTestResponse() *http.Response {
 
 	data := "{\"d\":\"{\\\"ClientTracking\\\":\\\"Certi\\\",\\\"ItemMessages\\\":[{\\\"LineNumber\\\":\\\"0\\\",\\\"Message\\\":\\\"Bill To Number is Required\\\",\\\"ResponseCode\\\":\\\"9131\\\"}],\\\"GroupList\\\":[{\\\"CustomerNumber\\\":\\\"001\\\",\\\"InvoiceNumber\\\":\\\"INV-002\\\",\\\"LineNumber\\\":\\\"01\\\",\\\"LocationCode\\\":\\\"\\\",\\\"StateCode\\\":\\\"FL\\\",\\\"TaxList\\\":[{\\\"CityName\\\":\\\"FERNANDINA BEACH\\\",\\\"CountyName\\\":\\\"NASSAU\\\",\\\"FeeRate\\\":0,\\\"Juriscode\\\":\\\"\\\",\\\"PercentTaxable\\\":1.000000,\\\"Revenue\\\":\\\"100.00\\\",\\\"RevenueBase\\\":\\\"113.71\\\",\\\"TaxAmount\\\":\\\"8.46\\\",\\\"TaxAuthorityID\\\":\\\"12009\\\",\\\"TaxAuthorityName\\\":\\\"FLORIDA, STATE OF\\\",\\\"TaxOnTax\\\":\\\"1.02\\\",\\\"TaxRate\\\":0.074400000000,\\\"TaxTypeCode\\\":\\\"127\\\",\\\"TaxTypeDesc\\\":\\\"FL COMMUNICATION SERVICES TAX\\\"},{\\\"CityName\\\":\\\"FERNANDINA BEACH\\\",\\\"CountyName\\\":\\\"NASSAU\\\",\\\"FeeRate\\\":0,\\\"Juriscode\\\":\\\"\\\",\\\"PercentTaxable\\\":0.649000,\\\"Revenue\\\":\\\"100.00\\\",\\\"RevenueBase\\\":\\\"64.89\\\",\\\"TaxAmount\\\":\\\"12.20\\\",\\\"TaxAuthorityID\\\":\\\"16\\\",\\\"TaxAuthorityName\\\":\\\"FEDERAL COMMUNICATIONS COMMISSION\\\",\\\"TaxOnTax\\\":\\\"0.00\\\",\\\"TaxRate\\\":0.188000000000,\\\"TaxTypeCode\\\":\\\"035\\\",\\\"TaxTypeDesc\\\":\\\"FEDERAL UNIVERSAL SERVICE FUND\\\"},{\\\"CityName\\\":\\\"FERNANDINA BEACH\\\",\\\"CountyName\\\":\\\"NASSAU\\\",\\\"FeeRate\\\":0,\\\"Juriscode\\\":\\\"\\\",\\\"PercentTaxable\\\":1.000000,\\\"Revenue\\\":\\\"100.00\\\",\\\"RevenueBase\\\":\\\"113.64\\\",\\\"TaxAmount\\\":\\\"6.50\\\",\\\"TaxAuthorityID\\\":\\\"4542\\\",\\\"TaxAuthorityName\\\":\\\"FERNANDINA BEACH, CITY OF\\\",\\\"TaxOnTax\\\":\\\"0.78\\\",\\\"TaxRate\\\":0.057200000000,\\\"TaxTypeCode\\\":\\\"337\\\",\\\"TaxTypeDesc\\\":\\\"LOCAL COMMUNICATIONS SVC. TAX\\\"},{\\\"CityName\\\":\\\"FERNANDINA BEACH\\\",\\\"CountyName\\\":\\\"NASSAU\\\",\\\"FeeRate\\\":0,\\\"Juriscode\\\":\\\"\\\",\\\"PercentTaxable\\\":0.649000,\\\"Revenue\\\":\\\"100.00\\\",\\\"RevenueBase\\\":\\\"65.09\\\",\\\"TaxAmount\\\":\\\"1.49\\\",\\\"TaxAuthorityID\\\":\\\"16\\\",\\\"TaxAuthorityName\\\":\\\"FEDERAL COMMUNICATIONS COMMISSION\\\",\\\"TaxOnTax\\\":\\\"0.00\\\",\\\"TaxRate\\\":0.022890000000,\\\"TaxTypeCode\\\":\\\"060\\\",\\\"TaxTypeDesc\\\":\\\"FEDERAL COST RECOVERY CHARGE\\\"}]}],\\\"HeaderMessage\\\":\\\"Success\\\",\\\"MasterTransId\\\":616039832,\\\"ResponseCode\\\":\\\"9999\\\",\\\"STAN\\\":\\\"\\\",\\\"Successful\\\":\\\"Y\\\",\\\"TotalTax\\\":\\\"28.65\\\",\\\"TransId\\\":616039832}\"}"
+
+	r := &http.Response{}
+	r.Body = ioutil.NopCloser(bytes.NewReader([]byte(data)))
+
+	return r
+}
+
+func getTestCancelResponse() *http.Response {
+
+	data := "{\"d\":\"{\\\"ClientTracking\\\":\\\"Certi\\\",\\\"HeaderMessage\\\":\\\"Success\\\",\\\"ResponseCode\\\":\\\"9999\\\",\\\"Successful\\\":\\\"Y\\\",\\\"TransId\\\":616039832}\"}"
 
 	r := &http.Response{}
 	r.Body = ioutil.NopCloser(bytes.NewReader([]byte(data)))

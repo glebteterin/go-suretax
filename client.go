@@ -198,8 +198,13 @@ func (c *SuretaxClient) parseCancelResponse(resp *http.Response) (*CancelRespons
 
 	logger.Debug("Response Data: ", string(bodyBytes))
 
+	respw := ResponseWrapper{}
+	if err := json.Unmarshal(bodyBytes, &respw); err != nil {
+		return nil, fmt.Errorf("Response Wrapper Unmarshal Failed. Error: %v", err)
+	}
+
 	res := &CancelResponse{}
-	if err := json.Unmarshal(bodyBytes, res); err != nil {
+	if err := json.Unmarshal([]byte(respw.D), res); err != nil {
 		return nil, fmt.Errorf("Response Unmarshal Failed. Error: %v", err)
 	}
 
